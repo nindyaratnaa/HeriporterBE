@@ -29,6 +29,7 @@ Route::middleware(ApiAuthMiddleware::class)->group(function () {
 
     //Profile [Khaula]
     //student only
+    Route::post('/profile/photo',                  [ApiController::class, 'uploadPhoto']);
     Route::delete('/account',                      [ApiController::class, 'deleteAccount']);
 
     //Wand

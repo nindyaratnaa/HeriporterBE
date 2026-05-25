@@ -106,6 +106,31 @@ class ApiController extends Controller
         return response()->json($this->safeUser($user));
     }
 
+    // POST /api/profile/photo - student only
+    public function uploadPhoto(Request $request, JsonService $json)
+    {
+        $this->requireRole($request, 'student');
+        $request->validate(['photo' => 'required|image|max:2048']);
+
+        $file     = $request->file('photo');
+        $filename = 'avatar_' . $request->user->sub . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('uploads/avatars'), $filename);
+
+        $users = $json->read('users');
+        $users = collect($users)->map(function ($u) use ($filename, $request) {
+            if ($u['id'] === $request->user->sub) {
+                if (!empty($u['photo']) && file_exists(public_path($u['photo']))) {
+                    unlink(public_path($u['photo']));
+                }
+                $u['photo'] = 'uploads/avatars/' . $filename;
+            }
+            return $u;
+        })->all();
+        $json->write('users', $users);
+
+        return response()->json(['photo' => 'uploads/avatars/' . $filename]);
+    }
+
     // DELETE /api/account - student only
     public function deleteAccount(Request $request, JsonService $json)
     {
